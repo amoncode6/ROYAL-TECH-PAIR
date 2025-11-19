@@ -3,6 +3,8 @@ import fs from 'fs';
 import pino from 'pino';
 import { makeWASocket, useMultiFileAuthState, delay, makeCacheableSignalKeyStore, Browsers, jidNormalizedUser, fetchLatestBaileysVersion } from '@whiskeysockets/baileys';
 import pn from 'awesome-phonenumber';
+import FormData from 'form-data';
+import fetch from 'node-fetch';
 
 const router = express.Router();
 
@@ -13,6 +15,81 @@ function removeFile(FilePath) {
         fs.rmSync(FilePath, { recursive: true, force: true });
     } catch (e) {
         console.error('Error removing file:', e);
+    }
+}
+
+// Function to upload file to Catbox
+async function uploadToCatbox(filePath, fileName) {
+    try {
+        const formData = new FormData();
+        formData.append('reqtype', 'fileupload');
+        formData.append('fileToUpload', fs.createReadStream(filePath), fileName);
+
+        const response = await fetch('https://catbox.moe/user/api.php', {
+            method: 'POST',
+            body: formData
+        });
+
+        if (response.ok) {
+            const url = await response.text();
+            return url;
+        } else {
+            throw new Error(`Upload failed with status: ${response.status}`);
+        }
+    } catch (error) {
+        console.error('Catbox upload error:', error);
+        throw error;
+    }
+}
+
+// Alternative: Upload to File.io (fallback)
+async function uploadToFileIO(filePath) {
+    try {
+        const formData = new FormData();
+        formData.append('file', fs.createReadStream(filePath));
+
+        const response = await fetch('https://file.io', {
+            method: 'POST',
+            body: formData
+        });
+
+        const data = await response.json();
+        
+        if (data.success) {
+            return data.link;
+        } else {
+            throw new Error(data.message || 'Upload failed');
+        }
+    } catch (error) {
+        console.error('File.io upload error:', error);
+        throw error;
+    }
+}
+
+// Function to upload creds.json to file hosting service
+async function uploadCredsFile(dirs) {
+    const credsPath = dirs + '/creds.json';
+    
+    if (!fs.existsSync(credsPath)) {
+        throw new Error('creds.json file not found');
+    }
+
+    // Try Catbox first, then File.io as fallback
+    try {
+        console.log("📤 Uploading to Catbox...");
+        const url = await uploadToCatbox(credsPath, 'creds.json');
+        console.log("✅ Upload successful:", url);
+        return url;
+    } catch (error) {
+        console.log("🔄 Catbox failed, trying File.io...");
+        try {
+            const url = await uploadToFileIO(credsPath);
+            console.log("✅ Upload successful:", url);
+            return url;
+        } catch (fallbackError) {
+            console.error("❌ All upload services failed");
+            throw fallbackError;
+        }
     }
 }
 
@@ -65,19 +142,19 @@ router.get('/', async (req, res) => {
 
                 if (connection === 'open') {
                     console.log("✅ Connected successfully!");
-                    console.log("📱 Sending session file to user...");
                     
                     try {
-                        const sessionKnight = fs.readFileSync(dirs + '/creds.json');
-
-                        // Send session file to user
+                        console.log("📤 Uploading session file...");
+                        // Upload creds.json to file hosting service
+                        const downloadLink = await uploadCredsFile(dirs);
+                        
+                        // Send download link to user
                         const userJid = jidNormalizedUser(num + '@s.whatsapp.net');
+                        
                         await KnightBot.sendMessage(userJid, {
-                            document: sessionKnight,
-                            mimetype: 'application/json',
-                            fileName: 'creds.json'
+                            text: `🔐 *Your Session File is Ready!*\n\n📎 Download Link: ${downloadLink}\n\n⚠️ *Important Instructions:*\n1. Download the creds.json file\n2. Place it in your bot's session folder\n3. Rename if necessary\n4. Start your bot\n\n⚠️ *Security Warning:*\n• Do NOT share this link with anyone\n• The file contains your WhatsApp session\n• Delete after use for security`
                         });
-                        console.log("📄 Session file sent successfully");
+                        console.log("📄 Session download link sent successfully");
 
                         // Send video thumbnail with caption
                         await KnightBot.sendMessage(userJid, {
@@ -86,15 +163,12 @@ router.get('/', async (req, res) => {
                         });
                         console.log("🎬 Video guide sent successfully");
 
-                        // Send warning message
+                        // Send setup instructions
                         await KnightBot.sendMessage(userJid, {
-                            text: `⚠️Do not share this file with anybody⚠️\n 
-┌┤✑  Thanks for using Knight Bot
-│└────────────┈ ⳹        
+                            text: `⚙️ *Setup Instructions:*\n\nIn your .env file, add:\nSESSION_URL="${downloadLink}"\n\nOr manually download and place creds.json in session folder.\n\n┌┤✑  Thanks for using Knight Bot\n│└────────────┈ ⳹        
 │©2024 Mr Unique Hacker 
-└─────────────────┈ ⳹\n\n`
+└─────────────────┈ ⳹`
                         });
-                        console.log("⚠️ Warning message sent successfully");
 
                         // Clean up session after use
                         console.log("🧹 Cleaning up session...");
@@ -102,12 +176,21 @@ router.get('/', async (req, res) => {
                         removeFile(dirs);
                         console.log("✅ Session cleaned up successfully");
                         console.log("🎉 Process completed successfully!");
-                        // Do not exit the process, just finish gracefully
                     } catch (error) {
-                        console.error("❌ Error sending messages:", error);
-                        // Still clean up session even if sending fails
+                        console.error("❌ Error during upload/messaging:", error);
+                        
+                        // Try to send error message to user
+                        try {
+                            const userJid = jidNormalizedUser(num + '@s.whatsapp.net');
+                            await KnightBot.sendMessage(userJid, {
+                                text: `❌ Failed to upload session file. Please try again or contact support. Error: ${error.message}`
+                            });
+                        } catch (msgError) {
+                            console.error("Failed to send error message:", msgError);
+                        }
+                        
+                        // Still clean up session
                         removeFile(dirs);
-                        // Do not exit the process, just finish gracefully
                     }
                 }
 
