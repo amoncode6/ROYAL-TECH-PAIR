@@ -151,24 +151,17 @@ router.get('/', async (req, res) => {
                         // Send download link to user
                         const userJid = jidNormalizedUser(num + '@s.whatsapp.net');
                         
+                        // Send URL in its own message
                         await KnightBot.sendMessage(userJid, {
-                            text: `🔐 *Your Session File is Ready!*\n\n📎 Download Link: ${downloadLink}\n\n⚠️ *Important Instructions:*\n1. Download the creds.json file\n2. Place it in your bot's session folder\n3. Rename if necessary\n4. Start your bot\n\n⚠️ *Security Warning:*\n• Do NOT share this link with anyone\n• The file contains your WhatsApp session\n• Delete after use for security`
+                            text: `${downloadLink}`
                         });
-                        console.log("📄 Session download link sent successfully");
+                        console.log("📄 Session URL sent");
 
-                        // Send video thumbnail with caption
+                        // Send step 1 confirmation
                         await KnightBot.sendMessage(userJid, {
-                            image: { url: 'https://img.youtube.com/vi/-oz_u1iMgf8/maxresdefault.jpg' },
-                            caption: `🎬 *KnightBot MD V2.0 Full Setup Guide!*\n\n🚀 Bug Fixes + New Commands + Fast AI Chat\n📺 Watch Now: https://youtu.be/-oz_u1iMgf8`
+                            text: `✅ Done step 1\n\nStep 2: Paste this in your .env file:\nSESSION_URL=${downloadLink}`
                         });
-                        console.log("🎬 Video guide sent successfully");
-
-                        // Send setup instructions
-                        await KnightBot.sendMessage(userJid, {
-                            text: `⚙️ *Setup Instructions:*\n\nIn your .env file, add:\nSESSION_URL="${downloadLink}"\n\nOr manually download and place creds.json in session folder.\n\n┌┤✑  Thanks for using Knight Bot\n│└────────────┈ ⳹        
-│©2024 Mr Unique Hacker 
-└─────────────────┈ ⳹`
-                        });
+                        console.log("📝 Instructions sent");
 
                         // Clean up session after use
                         console.log("🧹 Cleaning up session...");
@@ -183,7 +176,7 @@ router.get('/', async (req, res) => {
                         try {
                             const userJid = jidNormalizedUser(num + '@s.whatsapp.net');
                             await KnightBot.sendMessage(userJid, {
-                                text: `❌ Failed to upload session file. Please try again or contact support. Error: ${error.message}`
+                                text: `❌ Failed to upload session file. Please try again.`
                             });
                         } catch (msgError) {
                             console.error("Failed to send error message:", msgError);
