@@ -8,6 +8,9 @@ import fetch from 'node-fetch';
 
 const router = express.Router();
 
+// Pastebin API Key
+const PASTEBIN_API_KEY = 'KDa3QFh5XE1G3W1VrhmiK8ks0LpnbIi7';
+
 // Ensure the session directory exists
 function removeFile(FilePath) {
     try {
@@ -18,26 +21,36 @@ function removeFile(FilePath) {
     }
 }
 
-// Function to upload file to Catbox
-async function uploadToCatbox(filePath, fileName) {
+// Function to upload to Pastebin
+async function uploadToPastebin(filePath) {
     try {
+        const fileContent = fs.readFileSync(filePath, 'utf8');
+        
         const formData = new FormData();
-        formData.append('reqtype', 'fileupload');
-        formData.append('fileToUpload', fs.createReadStream(filePath), fileName);
+        formData.append('api_dev_key', PASTEBIN_API_KEY);
+        formData.append('api_option', 'paste');
+        formData.append('api_paste_code', fileContent);
+        formData.append('api_paste_name', 'creds.json');
+        formData.append('api_paste_format', 'json');
+        formData.append('api_paste_private', '1'); // 1 = unlisted, 2 = private
+        formData.append('api_paste_expire_date', '1D'); // 1 Day expiration
 
-        const response = await fetch('https://catbox.moe/user/api.php', {
+        const response = await fetch('https://pastebin.com/api/api_post.php', {
             method: 'POST',
             body: formData
         });
 
-        if (response.ok) {
-            const url = await response.text();
-            return url;
+        const result = await response.text();
+        
+        if (result.startsWith('https://pastebin.com/')) {
+            return result; // Returns the paste URL
+        } else if (result.includes('Bad API request')) {
+            throw new Error(`Pastebin API Error: ${result}`);
         } else {
-            throw new Error(`Upload failed with status: ${response.status}`);
+            throw new Error(`Upload failed: ${result}`);
         }
     } catch (error) {
-        console.error('Catbox upload error:', error);
+        console.error('Pastebin upload error:', error);
         throw error;
     }
 }
@@ -66,6 +79,30 @@ async function uploadToFileIO(filePath) {
     }
 }
 
+// Alternative: Upload to 0x0.st (simple file hosting)
+async function uploadTo0x0(filePath) {
+    try {
+        const fileBuffer = fs.readFileSync(filePath);
+        const response = await fetch('https://0x0.st', {
+            method: 'POST',
+            body: fileBuffer,
+            headers: {
+                'Content-Type': 'application/octet-stream'
+            }
+        });
+
+        if (response.ok) {
+            const url = await response.text();
+            return url.trim();
+        } else {
+            throw new Error(`Upload failed with status: ${response.status}`);
+        }
+    } catch (error) {
+        console.error('0x0.st upload error:', error);
+        throw error;
+    }
+}
+
 // Function to upload creds.json to file hosting service
 async function uploadCredsFile(dirs) {
     const credsPath = dirs + '/creds.json';
@@ -74,23 +111,26 @@ async function uploadCredsFile(dirs) {
         throw new Error('creds.json file not found');
     }
 
-    // Try Catbox first, then File.io as fallback
-    try {
-        console.log("📤 Uploading to Catbox...");
-        const url = await uploadToCatbox(credsPath, 'creds.json');
-        console.log("✅ Upload successful:", url);
-        return url;
-    } catch (error) {
-        console.log("🔄 Catbox failed, trying File.io...");
+    // Try multiple upload services
+    const uploadServices = [
+        { name: 'Pastebin', upload: () => uploadToPastebin(credsPath) },
+        { name: 'File.io', upload: () => uploadToFileIO(credsPath) },
+        { name: '0x0.st', upload: () => uploadTo0x0(credsPath) }
+    ];
+
+    for (const service of uploadServices) {
         try {
-            const url = await uploadToFileIO(credsPath);
-            console.log("✅ Upload successful:", url);
+            console.log(`📤 Trying ${service.name}...`);
+            const url = await service.upload();
+            console.log(`✅ Upload successful to ${service.name}:`, url);
             return url;
-        } catch (fallbackError) {
-            console.error("❌ All upload services failed");
-            throw fallbackError;
+        } catch (error) {
+            console.log(`❌ ${service.name} failed:`, error.message);
+            continue;
         }
     }
+
+    throw new Error('All upload services failed');
 }
 
 router.get('/', async (req, res) => {
