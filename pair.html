@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Knight Bot - WhatsApp Linker</title>
+  <title>WhatsApp Linker</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"/>
   <style>
     :root {
@@ -14,6 +14,9 @@
       --background-color: #ffffff;
       --hover-color: #f5f5f5;
       --border-color: rgba(0, 0, 0, 0.1);
+      --neon-blue: #00f3ff;
+      --neon-purple: #b967ff;
+      --neon-pink: #ff2a6d;
     }
 
     * {
@@ -24,7 +27,7 @@
 
     body {
       font-family: 'Inter', sans-serif;
-      background: var(--background-color);
+      background: linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 50%, #16213e 100%);
       color: var(--text-color);
       min-height: 100vh;
       display: flex;
@@ -36,11 +39,30 @@
     .container {
       width: 100%;
       max-width: 450px;
-      background: var(--background-color);
-      border-radius: 16px;
-      padding: 25px;
-      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
-      border: 1px solid var(--border-color);
+      background: rgba(255, 255, 255, 0.95);
+      border-radius: 20px;
+      padding: 30px;
+      box-shadow: 
+        0 0 20px rgba(0, 243, 255, 0.3),
+        0 0 40px rgba(185, 103, 255, 0.2),
+        inset 0 0 20px rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      backdrop-filter: blur(10px);
+      animation: glow 3s ease-in-out infinite alternate;
+    }
+
+    @keyframes glow {
+      0% {
+        box-shadow: 
+          0 0 20px rgba(0, 243, 255, 0.3),
+          0 0 40px rgba(185, 103, 255, 0.2);
+      }
+      100% {
+        box-shadow: 
+          0 0 30px rgba(0, 243, 255, 0.5),
+          0 0 60px rgba(185, 103, 255, 0.3),
+          0 0 80px rgba(255, 42, 109, 0.2);
+      }
     }
 
     .header {
@@ -49,24 +71,36 @@
     }
 
     .logo {
-      width: 70px;
-      height: 70px;
-      margin: 0 auto 16px;
-      background: var(--primary-color);
+      width: 80px;
+      height: 80px;
+      margin: 0 auto 20px;
+      background: linear-gradient(135deg, var(--neon-blue), var(--neon-purple));
       border-radius: 50%;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 28px;
+      font-size: 32px;
       color: white;
-      box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
+      box-shadow: 
+        0 0 20px var(--neon-blue),
+        0 0 40px var(--neon-purple);
+      animation: float 3s ease-in-out infinite;
+    }
+
+    @keyframes float {
+      0%, 100% { transform: translateY(0px); }
+      50% { transform: translateY(-10px); }
     }
 
     .title {
-      font-size: 24px;
-      font-weight: 700;
+      font-size: 28px;
+      font-weight: 800;
       margin-bottom: 8px;
-      color: var(--primary-color);
+      background: linear-gradient(135deg, var(--neon-blue), var(--neon-purple), var(--neon-pink));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      text-shadow: 0 0 10px rgba(0, 243, 255, 0.3);
     }
 
     .subtitle {
@@ -75,34 +109,13 @@
       margin-bottom: 20px;
     }
 
-    .social-icons {
-      display: flex;
-      justify-content: center;
-      gap: 12px;
-      margin-bottom: 20px;
-    }
-
-    .social-icons a {
-      width: 44px;
-      height: 44px;
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: #fff;
-      font-size: 18px;
-      text-decoration: none;
-      transition: all 0.3s ease;
-    }
-
-    .social-icons a.youtube { background: #FF0000; }
-    .social-icons a.telegram { background: #0088cc; }
-    .social-icons a.whatsapp { background: #0cfa10; }
-    .social-icons a.github { background: #333; }
-
-    .social-icons a:hover {
-      transform: scale(1.1);
-      box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+    .brand {
+      font-size: 12px;
+      color: var(--neon-purple);
+      font-weight: 600;
+      letter-spacing: 1px;
+      margin-top: 10px;
+      text-transform: uppercase;
     }
 
     /* Toggle Switch Styles */
@@ -110,28 +123,47 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      margin-bottom: 20px;
-      background: var(--hover-color);
-      border-radius: 12px;
+      margin-bottom: 25px;
+      background: rgba(0, 0, 0, 0.05);
+      border-radius: 15px;
       padding: 4px;
       border: 1px solid var(--border-color);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .toggle-container::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(0, 243, 255, 0.2), transparent);
+      transition: left 0.5s;
+    }
+
+    .toggle-container:hover::before {
+      left: 100%;
     }
 
     .toggle-option {
       flex: 1;
-      padding: 10px 16px;
+      padding: 12px 16px;
       text-align: center;
       cursor: pointer;
-      border-radius: 8px;
+      border-radius: 12px;
       font-size: 14px;
-      font-weight: 500;
+      font-weight: 600;
       transition: all 0.3s ease;
       position: relative;
+      z-index: 1;
     }
 
     .toggle-option.active {
-      background: var(--primary-color);
-      color: var(--secondary-color);
+      background: linear-gradient(135deg, var(--neon-blue), var(--neon-purple));
+      color: white;
+      box-shadow: 0 0 15px rgba(0, 243, 255, 0.5);
     }
 
     .toggle-option:not(.active) {
@@ -139,30 +171,11 @@
     }
 
     .toggle-option:hover:not(.active) {
-      background: var(--background-color);
-    }
-    .copy-btn {
-      width: 100%;
-      padding: 12px;
-      background: var(--hover-color);
-      border: 1.5px solid var(--border-color);
-      border-radius: 12px;
-      font-size: 15px;
-      font-weight: 600;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 8px;
-    }
-
-    .copy-btn:hover {
-      background: var(--background-color);
-      border-color: var(--primary-color);
+      background: rgba(0, 243, 255, 0.1);
     }
 
     .input-group {
-      margin-bottom: 20px;
+      margin-bottom: 25px;
       transition: all 0.3s ease;
     }
 
@@ -172,44 +185,66 @@
 
     .input-label {
       display: block;
-      margin-bottom: 8px;
-      font-weight: 500;
-      font-size: 13px;
+      margin-bottom: 10px;
+      font-weight: 600;
+      font-size: 14px;
+      color: #333;
     }
 
     .input-field {
       width: 100%;
-      padding: 12px;
-      border: 1.5px solid var(--border-color);
-      border-radius: 12px;
-      background: var(--background-color);
+      padding: 15px;
+      border: 2px solid rgba(0, 0, 0, 0.1);
+      border-radius: 15px;
+      background: rgba(255, 255, 255, 0.9);
       color: var(--text-color);
-      font-size: 15px;
+      font-size: 16px;
+      transition: all 0.3s ease;
     }
 
     .input-field:focus {
       outline: none;
-      border-color: var(--primary-color);
-      box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.1);
+      border-color: var(--neon-blue);
+      box-shadow: 0 0 15px rgba(0, 243, 255, 0.3);
+      background: white;
     }
 
     .generate-btn {
       width: 100%;
-      padding: 12px;
-      background: var(--primary-color);
+      padding: 15px;
+      background: linear-gradient(135deg, var(--neon-blue), var(--neon-purple));
       border: none;
-      border-radius: 12px;
-      color: var(--secondary-color);
-      font-size: 15px;
-      font-weight: 600;
+      border-radius: 15px;
+      color: white;
+      font-size: 16px;
+      font-weight: 700;
       cursor: pointer;
       transition: all 0.3s ease;
-      margin-bottom: 16px;
+      margin-bottom: 20px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .generate-btn::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+      transition: left 0.5s;
+    }
+
+    .generate-btn:hover::before {
+      left: 100%;
     }
 
     .generate-btn:hover {
-      transform: translateY(-1px);
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+      transform: translateY(-2px);
+      box-shadow: 
+        0 5px 20px rgba(0, 243, 255, 0.4),
+        0 0 30px rgba(185, 103, 255, 0.3);
     }
 
     .generate-btn.hidden {
@@ -217,28 +252,62 @@
     }
 
     .code-display {
-      background: var(--hover-color);
-      padding: 12px;
-      border-radius: 12px;
+      background: rgba(0, 0, 0, 0.05);
+      padding: 20px;
+      border-radius: 15px;
       text-align: center;
-      font-size: 16px;
-      font-weight: 600;
-      margin-bottom: 16px;
-      min-height: 40px;
+      font-size: 18px;
+      font-weight: 700;
+      margin-bottom: 20px;
+      min-height: 60px;
       display: flex;
       align-items: center;
       justify-content: center;
-      border: 1.5px solid var(--border-color);
+      border: 2px solid transparent;
+      background-clip: padding-box;
+      position: relative;
+    }
+
+    .code-display::before {
+      content: '';
+      position: absolute;
+      top: -2px;
+      left: -2px;
+      right: -2px;
+      bottom: -2px;
+      background: linear-gradient(135deg, var(--neon-blue), var(--neon-purple), var(--neon-pink));
+      border-radius: 17px;
+      z-index: -1;
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+
+    .code-display.has-code::before {
+      opacity: 1;
     }
 
     .qr-display {
-      background: var(--hover-color);
+      background: rgba(0, 0, 0, 0.05);
       padding: 30px;
-      border-radius: 12px;
+      border-radius: 15px;
       text-align: center;
-      margin-bottom: 16px;
-      border: 1.5px solid var(--border-color);
+      margin-bottom: 20px;
+      border: 2px solid transparent;
+      background-clip: padding-box;
+      position: relative;
       display: none;
+    }
+
+    .qr-display::before {
+      content: '';
+      position: absolute;
+      top: -2px;
+      left: -2px;
+      right: -2px;
+      bottom: -2px;
+      background: linear-gradient(135deg, var(--neon-blue), var(--neon-purple), var(--neon-pink));
+      border-radius: 17px;
+      z-index: -1;
     }
 
     .qr-image {
@@ -246,42 +315,46 @@
       max-height: 280px;
       margin: 0 auto 20px;
       border-radius: 12px;
-      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+      box-shadow: 0 0 20px rgba(0, 0, 0, 0.2);
     }
 
     .qr-instructions {
-      font-size: 13px;
+      font-size: 14px;
       color: rgba(0, 0, 0, 0.7);
       line-height: 1.5;
     }
 
     .success-message {
-      color: #000aff;
+      color: #00a800;
       display: flex;
       align-items: center;
       justify-content: center;
-      gap: 8px;
-      font-size: 16px;
+      gap: 10px;
+      font-size: 18px;
+      text-shadow: 0 0 10px rgba(0, 168, 0, 0.3);
     }
 
     .error-message {
-      color: #e74c3c;
+      color: #ff4444;
       display: flex;
       align-items: center;
       justify-content: center;
-      gap: 8px;
-      font-size: 14px;
+      gap: 10px;
+      font-size: 16px;
     }
 
     .loading {
       display: none;
       text-align: center;
-      margin: 16px 0;
+      margin: 20px 0;
     }
 
     .loading i {
-      font-size: 24px;
-      color: var(--primary-color);
+      font-size: 28px;
+      background: linear-gradient(135deg, var(--neon-blue), var(--neon-purple));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
       animation: spin 1s linear infinite;
     }
 
@@ -290,17 +363,63 @@
       100% { transform: rotate(360deg); }
     }
 
+    .copy-btn {
+      width: 100%;
+      padding: 15px;
+      background: transparent;
+      border: 2px solid var(--neon-blue);
+      border-radius: 15px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      color: var(--neon-blue);
+      transition: all 0.3s ease;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .copy-btn::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(0, 243, 255, 0.2), transparent);
+      transition: left 0.5s;
+    }
+
+    .copy-btn:hover::before {
+      left: 100%;
+    }
+
+    .copy-btn:hover {
+      background: rgba(0, 243, 255, 0.1);
+      box-shadow: 0 0 20px rgba(0, 243, 255, 0.3);
+      transform: translateY(-1px);
+    }
+
     .footer {
       text-align: center;
-      margin-top: 20px;
+      margin-top: 25px;
       font-size: 12px;
-      color: rgba(0, 0, 0, 0.5);
+      color: rgba(0, 0, 0, 0.6);
+    }
+
+    .royal-tech {
+      font-weight: 700;
+      color: var(--neon-purple);
+      text-shadow: 0 0 10px rgba(185, 103, 255, 0.3);
     }
 
     @media (max-width: 480px) {
       .container {
-        padding: 20px;
-        border-radius: 12px;
+        padding: 25px;
+        border-radius: 15px;
         max-width: 400px;
       }
 
@@ -315,7 +434,7 @@
       }
 
       .qr-display {
-        padding: 20px;
+        padding: 25px;
       }
     }
   </style>
@@ -323,15 +442,10 @@
 <body>
   <div class="container">
     <div class="header">
-      <div class="logo"><i class="fas fa-robot"></i></div>
-      <h1 class="title">Knight Bot</h1>
-      <p class="subtitle">Link your WhatsApp device</p>
-      <div class="social-icons">
-        <a href="https://www.youtube.com/@mr_unique_hacker?sub_confirmation=1" target="_blank" class="youtube"><i class="fab fa-youtube"></i></a>
-        <a href="https://t.me/+hxojkc7kaVViYzdl" target="_blank" class="telegram"><i class="fab fa-telegram-plane"></i></a>
-        <a href="https://whatsapp.com/channel/0029Va90zAnIHphOuO8Msp3A" target="_blank" class="whatsapp"><i class="fab fa-whatsapp"></i></a>
-        <a href="https://github.com/mruniquehacker/Knightbot-md" target="_blank" class="github"><i class="fab fa-github"></i></a>
-      </div>
+      <div class="logo"><i class="fas fa-link"></i></div>
+      <h1 class="title">WhatsApp Linker</h1>
+      <p class="subtitle">Connect your WhatsApp device securely</p>
+      <div class="brand">Made by ROYAL TECH</div>
     </div>
 
     <!-- Toggle Switch -->
@@ -346,7 +460,7 @@
 
     <div class="input-group" id="inputGroup">
       <label class="input-label">Enter your WhatsApp number with country code</label>
-      <input type="text" id="mobileNumber" class="input-field" placeholder="+917023951514" pattern="[+][0-9]{10,}" title="Please enter country code starting with + followed by number">
+      <input type="text" id="mobileNumber" class="input-field" placeholder="+254759XXXXXX" pattern="[+][0-9]{10,}" title="Please enter country code starting with + followed by number">
     </div>
 
     <button class="generate-btn" id="submit">
@@ -373,7 +487,7 @@
     </button>
 
     <div class="footer">
-      <p>© 2025 Mr Unique Hacker | Knight Bot</p>
+      <p>© 2025 <span class="royal-tech">ROYAL TECH</span> | All rights reserved</p>
     </div>
   </div>
 
@@ -411,6 +525,7 @@
 
         // Clear displays
         document.getElementById('codeDisplay').innerHTML = 'Your pair code will appear here';
+        document.getElementById('codeDisplay').classList.remove('has-code');
         document.getElementById('qrDisplay').style.display = 'none';
         document.getElementById('codeDisplay').style.display = 'flex';
       });
@@ -462,6 +577,7 @@
 
       loadingSpinner.style.display = "block";
       codeDisplay.innerHTML = '';
+      codeDisplay.classList.remove('has-code');
       qrDisplay.style.display = 'none';
 
       try {
@@ -472,6 +588,7 @@
           codeDisplay.innerHTML = '<div class="error-message"><i class="fas fa-exclamation-circle"></i> Service Unavailable</div>';
         } else {
           codeDisplay.innerHTML = `<div class="success-message"><i class="fas fa-check-circle"></i> CODE: ${code}</div>`;
+          codeDisplay.classList.add('has-code');
         }
         codeDisplay.style.display = 'flex';
       } catch (error) {
@@ -482,6 +599,7 @@
         loadingSpinner.style.display = "none";
       }
     });
+
     function copyCode() {
       const codeDisplay = document.getElementById("codeDisplay").innerText;
       const code = codeDisplay.replace('CODE: ', '');
@@ -489,8 +607,15 @@
         const copyBtn = document.getElementById("copy");
         const originalText = copyBtn.innerHTML;
         copyBtn.innerHTML = '<i class="fas fa-check"></i> Copied!';
+        copyBtn.style.background = 'rgba(0, 168, 0, 0.1)';
+        copyBtn.style.borderColor = '#00a800';
+        copyBtn.style.color = '#00a800';
+        
         setTimeout(() => {
           copyBtn.innerHTML = originalText;
+          copyBtn.style.background = 'transparent';
+          copyBtn.style.borderColor = 'var(--neon-blue)';
+          copyBtn.style.color = 'var(--neon-blue)';
         }, 2000);
       }).catch(err => {
         console.error("Failed to copy text: ", err);
