@@ -79,30 +79,6 @@ async function uploadToFileIO(filePath) {
     }
 }
 
-// Alternative: Upload to 0x0.st (simple file hosting)
-async function uploadTo0x0(filePath) {
-    try {
-        const fileBuffer = fs.readFileSync(filePath);
-        const response = await fetch('https://0x0.st', {
-            method: 'POST',
-            body: fileBuffer,
-            headers: {
-                'Content-Type': 'application/octet-stream'
-            }
-        });
-
-        if (response.ok) {
-            const url = await response.text();
-            return url.trim();
-        } else {
-            throw new Error(`Upload failed with status: ${response.status}`);
-        }
-    } catch (error) {
-        console.error('0x0.st upload error:', error);
-        throw error;
-    }
-}
-
 // Function to upload creds.json to file hosting service
 async function uploadCredsFile(dirs) {
     const credsPath = dirs + '/creds.json';
@@ -111,26 +87,23 @@ async function uploadCredsFile(dirs) {
         throw new Error('creds.json file not found');
     }
 
-    // Try multiple upload services
-    const uploadServices = [
-        { name: 'Pastebin', upload: () => uploadToPastebin(credsPath) },
-        { name: 'File.io', upload: () => uploadToFileIO(credsPath) },
-        { name: '0x0.st', upload: () => uploadTo0x0(credsPath) }
-    ];
-
-    for (const service of uploadServices) {
+    // Try Pastebin first, then File.io as fallback
+    try {
+        console.log("📤 Uploading to Pastebin...");
+        const url = await uploadToPastebin(credsPath);
+        console.log("✅ Upload successful:", url);
+        return url;
+    } catch (error) {
+        console.log("🔄 Pastebin failed, trying File.io...");
         try {
-            console.log(`📤 Trying ${service.name}...`);
-            const url = await service.upload();
-            console.log(`✅ Upload successful to ${service.name}:`, url);
+            const url = await uploadToFileIO(credsPath);
+            console.log("✅ Upload successful:", url);
             return url;
-        } catch (error) {
-            console.log(`❌ ${service.name} failed:`, error.message);
-            continue;
+        } catch (fallbackError) {
+            console.error("❌ All upload services failed");
+            throw fallbackError;
         }
     }
-
-    throw new Error('All upload services failed');
 }
 
 router.get('/', async (req, res) => {
